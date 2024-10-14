@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import { User } from '../domain/user.schema';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { OutputUsersType } from '../api/output/users.output.dto';
-import { randomUUID } from 'crypto';
+import { Users } from '../domain/user.sql.entity';
+import { User } from '../domain/user.schema';
+import { EmailConfirmation } from '../domain/email.confirmation.entity';
 
 @Injectable()
 export class UsersSqlRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
+    @InjectRepository(Users) protected userRepository: Repository<Users>,
+    @InjectRepository(EmailConfirmation)
+    protected emailConfirmRepository: Repository<EmailConfirmation>,
     // @InjectRepository(Users)
     // private userRepository: Repository<Users>,
     // @InjectRepository(EmailConfirmation)
@@ -21,56 +25,63 @@ export class UsersSqlRepository {
         FROM public."users";`);
     return result;
   }
+
   async createUser(userData: User): Promise<OutputUsersType | null> {
     const { accountData, emailConfirmation } = userData;
-    const userId = randomUUID();
-    const emailId = randomUUID();
+    // const userId = randomUUID();
+    // const emailId = randomUUID();
 
     try {
-      const query = `
-        INSERT INTO public."users"(
-        "id", "_passwordHash", "login", "email", "createdAt")
-        VALUES ($1, $2, $3, $4, $5);
-    `;
+      const user = new Users();
+      user._passwordHash = accountData._passwordHash;
+      user.login = accountData.login;
+      user.email = accountData.email;
+      user.createdAt = accountData.createdAt;
+      const createdUser = await this.userRepository.save<Users>(user);
+      const userId = createdUser.id;
+      //   const query = `
+      //     INSERT INTO public."users"(
+      //      "_passwordHash", "login", "email", "createdAt")
+      //     VALUES ($1, $2, $3, $4);
+      // `;
 
-      const insertUserTable = await this.dataSource.query(query, [
-        userId,
-        accountData._passwordHash,
-        accountData.login,
-        accountData.email,
-        accountData.createdAt,
-      ]);
+      // const insertUserTable = await this.dataSource.query(query, [
+      //   accountData._passwordHash,
+      //   accountData.login,
+      //   accountData.email,
+      //   accountData.createdAt,
+      // ]);
       const queryEmail = `
         INSERT INTO public."email_confirmation"(
-        "id", "confirmationCode", "expirationDate", "isConfirmed", "userId")
-        VALUES ($1, $2, $3, $4, $5);
+         "confirmationCode", "expirationDate", "isConfirmed", "userId")
+        VALUES ($1, $2, $3, $4);
     `;
       const insertEmailTable = await this.dataSource.query(queryEmail, [
-        emailId,
         emailConfirmation.confirmationCode,
         emailConfirmation.expirationDate,
         emailConfirmation.isConfirmed,
         userId,
       ]);
-    } catch (e) {
-      console.log(e);
-      return e;
-    }
-    const result = await this.dataSource.query(
-      `
+
+      const result = await this.dataSource.query(
+        `
         SELECT "id", "_passwordHash", "login", "email", "createdAt"
         FROM public."users" as u
         WHERE u."id" = $1
     `,
-      [userId],
-    );
+        [userId],
+      );
 
-    return {
-      id: result[0].id,
-      login: result[0].login,
-      email: result[0].email,
-      createdAt: result[0].createdAt,
-    };
+      return {
+        id: result[0].id,
+        login: result[0].login,
+        email: result[0].email,
+        createdAt: result[0].createdAt,
+      };
+    } catch (e) {
+      console.log(e);
+      return e;
+    }
   }
 
   async blackListCheck(userId: string, token: string): Promise<boolean> {
@@ -88,6 +99,7 @@ export class UsersSqlRepository {
 
     return !!check;
   }
+
   async doesExistByLogin(login: string): Promise<boolean> {
     const existCheck = await this.dataSource.query(
       `
@@ -99,6 +111,7 @@ export class UsersSqlRepository {
     );
     return !!existCheck[0];
   }
+
   async doesExistByEmail(email: string): Promise<boolean> {
     const existCheck = await this.dataSource.query(
       `
@@ -110,6 +123,7 @@ export class UsersSqlRepository {
     );
     return !!existCheck[0];
   }
+
   async confirmEmail(userId: string) {
     try {
       await this.dataSource.query(
@@ -125,6 +139,7 @@ export class UsersSqlRepository {
       return false;
     }
   }
+
   async deleteUser(userId: string) {
     try {
       const deleted = await this.dataSource.query(
@@ -140,6 +155,7 @@ export class UsersSqlRepository {
       console.log(e);
     }
   }
+
   async changePass(userId: string, hash: string): Promise<boolean> {
     const res = await this.dataSource.query(
       `
@@ -151,6 +167,7 @@ export class UsersSqlRepository {
     );
     return !!res[1];
   }
+
   async updateNewConfirmCode(userId: string, code: string): Promise<boolean> {
     const res = await this.dataSource.query(
       `

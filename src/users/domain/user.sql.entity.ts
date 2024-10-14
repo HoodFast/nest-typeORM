@@ -1,4 +1,4 @@
-import { BaseEntity, Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import {BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn} from 'typeorm';
 import { EmailConfirmation } from './email.confirmation.entity';
 import { Sessions } from '../../sessions/domain/session.sql.entity';
 import { TokensBlackList } from './tokens.black.list.sql.entity';
@@ -10,7 +10,7 @@ import {
 
 @Entity()
 export class Users extends BaseEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column()
   _passwordHash: string;

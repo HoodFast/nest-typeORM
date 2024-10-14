@@ -1,8 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { UsersSqlQueryRepository } from './users/infrastructure/users.sql.query.repository';
 import { UsersSqlRepository } from './users/infrastructure/users.sql.repository';
-import { UsersRepository } from './users/infrastructure/users.repository';
 import { UsersService } from './users/application/users.service';
 import { BlogsSqlRepository } from './blogs/infrastructure/blogs.sql.repository';
 import { BlogsSqlQueryRepository } from './blogs/infrastructure/blogs.sql.query.repository';
@@ -15,12 +14,9 @@ import {
   PostCreateData,
 } from './posts/api/input/PostsCreate.dto';
 import { PostsSqlRepository } from './posts/infrastructure/posts.sql.repository';
-import { Likes, likesStatuses } from './posts/domain/post.schema';
+import { likesStatuses } from './posts/domain/post.schema';
 import { CommentsSqlRepository } from './comments/infrastructure/comments.sql.repository';
-import {
-  CommentatorInfo,
-  CommentDbType,
-} from './comments/domain/comment.schema';
+import { CommentDbType } from './comments/domain/comment.schema';
 import { CommentsSqlQueryRepository } from './comments/infrastructure/comments.sql.query.repository';
 
 @Controller()
@@ -29,7 +25,7 @@ export class AppController {
     private readonly appService: AppService,
     protected userSqlQueryRepository: UsersSqlQueryRepository,
     protected userSqlRepository: UsersSqlRepository,
-
+    protected userService: UsersService,
     protected blogSqlRepository: BlogsSqlRepository,
     protected blogSqlQueryRepository: BlogsSqlQueryRepository,
     protected postSqlQueryRepository: PostsSqlQueryRepository,
@@ -37,10 +33,21 @@ export class AppController {
     protected commentsSqlRepository: CommentsSqlRepository,
     protected commentsSqlQueryRepository: CommentsSqlQueryRepository,
   ) {}
+
   @Get()
   async hello() {
     return 'Start App';
   }
+
+  @Post('createuser')
+  async createUser() {
+    const login = '123455';
+    const email = 'trassa@mail.ru';
+    const password = '12345';
+
+    return await this.userService.createUser(login, email, password);
+  }
+
   @Get('get')
   async getAllBlogs() {
     const sortData: BlogSortData = {
@@ -69,6 +76,7 @@ export class AppController {
 
     return res;
   }
+
   @Get('getpost')
   async getPost() {
     const sortData: BlogSortData = {
@@ -88,8 +96,12 @@ export class AppController {
 
     return res;
   }
+
   @Get('get/:id')
-  async getForId(@Param('id') id: string) {
+  async getForId(
+    @Param('id')
+    id: string,
+  ) {
     const res = await this.blogSqlQueryRepository.getBlogById(id);
     return res;
   }
@@ -110,6 +122,7 @@ export class AppController {
     );
     return res;
   }
+
   @Post('update_post')
   async updatePost() {
     const random = randomUUID();
@@ -125,8 +138,12 @@ export class AppController {
     );
     return res;
   }
+
   @Post('update_blog/:id')
-  async updateBlog(@Param('id') id: string) {
+  async updateBlog(
+    @Param('id')
+    id: string,
+  ) {
     const updateDate: createBlogInputDto = {
       name: 'blog is updated',
       description: 'blog is updated',
@@ -135,11 +152,16 @@ export class AppController {
     const res = await this.blogSqlRepository.updateBlog(id, updateDate);
     return res;
   }
+
   @Delete('delete_blog/:id')
-  async deleteBlog(@Param('id') id: string) {
+  async deleteBlog(
+    @Param('id')
+    id: string,
+  ) {
     const res = await this.blogSqlRepository.deleteBlog(id);
     return res;
   }
+
   @Post('createLike')
   async createLike() {
     const userId = '4707b8bd-b083-4f84-9f90-bda7b33fc976';
@@ -153,6 +175,7 @@ export class AppController {
       postId,
     );
   }
+
   @Post('create_comment')
   async createComment() {
     const random = randomUUID();
@@ -177,6 +200,7 @@ export class AppController {
     const res = await this.commentsSqlRepository.createComment(data);
     return res;
   }
+
   @Post('like')
   async like() {
     const res = await this.commentsSqlRepository.addLikeToComment(
@@ -186,6 +210,7 @@ export class AppController {
     );
     return res;
   }
+
   @Get('get_comments')
   async getComment() {
     const data: SortData = {
@@ -201,6 +226,7 @@ export class AppController {
     );
     return res;
   }
+
   @Post('update_comment')
   async updateComment() {
     const res = await this.commentsSqlRepository.updateComment(
@@ -209,6 +235,7 @@ export class AppController {
     );
     return res;
   }
+
   @Delete('update_comment')
   async deleteComment() {
     const res = await this.commentsSqlRepository.deleteById(

@@ -1,9 +1,9 @@
-import { BaseEntity, Column, Entity, ManyToOne, PrimaryColumn } from 'typeorm';
+import {BaseEntity, Column, Entity, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn} from 'typeorm';
 import { Users } from './user.sql.entity';
 
 @Entity()
 export class EmailConfirmation extends BaseEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column()
   confirmationCode: string;

@@ -162,7 +162,7 @@ const services = [
           host: sqlDataBaseSettings?.SQL_HOST,
           username: sqlDataBaseSettings?.SQL_USERNAME,
           password: sqlDataBaseSettings?.SQL_PASS,
-          database: 'superbase',
+          database: 'neondb',
           ssl: true,
           autoLoadEntities: true,
           synchronize: true,
