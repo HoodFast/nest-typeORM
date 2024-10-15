@@ -1,6 +1,7 @@
 import { UserEntity } from '../user.entity';
+import { Users } from '../user.sql.entity';
 
-export const userMapper = (data: any): UserEntity => {
+export const userMapper = (data: Users): UserEntity => {
   return {
     _id: data.id,
     accountData: {
@@ -11,10 +12,10 @@ export const userMapper = (data: any): UserEntity => {
       createdAt: data.createdAt,
     },
     emailConfirmation: {
-      confirmationCode: data.confirmationCode,
-      expirationDate: data.expirationDate,
-      isConfirmed: data.isConfirmed,
+      confirmationCode: data.emailConfirmation[0].confirmationCode,
+      expirationDate: data.emailConfirmation[0].expirationDate,
+      isConfirmed: data.emailConfirmation[0].isConfirmed,
     },
-    tokensBlackList: data.tokensBlackList[0].array_agg,
+    tokensBlackList: data.tokensBlackList,
   };
 };

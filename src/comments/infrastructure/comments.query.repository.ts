@@ -35,7 +35,7 @@ export class CommentsQueryRepository {
     const post = await this.postQueryRepository.getPostById(postId);
     if (!post) return null;
     const { sortBy, sortDirection, pageSize, pageNumber } = sortData;
-    const mySortDirection = sortDirection == 'asc' ? 1 : -1;
+    const mySortDirection = sortDirection == 'ASC' ? 1 : -1;
     const comments = await this.commentModel
       .find({ postId: postId })
       .sort({ [sortBy]: mySortDirection })

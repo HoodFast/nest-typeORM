@@ -49,8 +49,8 @@ import {
 import { DeleteSaPostCommand } from '../../posts/api/use-cases/delete-sa-post.usecase';
 
 export enum sortDirection {
-  asc = 'asc',
-  desc = 'desc',
+  asc = 'ASC',
+  desc = 'DESC',
 }
 
 export type queryBlogsInputType = {

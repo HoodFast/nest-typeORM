@@ -1,3 +1,5 @@
+import { TokensBlackList } from './tokens.black.list.sql.entity';
+
 export class UserEntity {
   _id: string;
   accountData: {
@@ -12,5 +14,5 @@ export class UserEntity {
     expirationDate: Date;
     isConfirmed: boolean;
   };
-  tokensBlackList: string[];
+  tokensBlackList: TokensBlackList[];
 }

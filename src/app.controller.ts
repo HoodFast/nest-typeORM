@@ -38,7 +38,10 @@ export class AppController {
   async hello() {
     return 'Start App';
   }
-
+  @Get('getusers')
+  async getUsers() {
+    return this.userSqlQueryRepository.findUser('123455');
+  }
   @Post('createuser')
   async createUser() {
     const login = '123455';
@@ -52,7 +55,7 @@ export class AppController {
   async getAllBlogs() {
     const sortData: BlogSortData = {
       sortBy: 'createdAt',
-      sortDirection: 'desc',
+      sortDirection: 'DESC',
       pageNumber: 1,
       pageSize: 10,
       searchNameTerm: '',
@@ -67,7 +70,7 @@ export class AppController {
     const userId = '98cd1b37-cb25-424c-89be-90f73185b011';
     const sortData: BlogSortData = {
       sortBy: 'createdAt',
-      sortDirection: 'desc',
+      sortDirection: 'DESC',
       pageNumber: 1,
       pageSize: 10,
       searchNameTerm: '',
@@ -81,7 +84,7 @@ export class AppController {
   async getPost() {
     const sortData: BlogSortData = {
       sortBy: 'createdAt',
-      sortDirection: 'desc',
+      sortDirection: 'DESC',
       pageNumber: 1,
       pageSize: 10,
       searchNameTerm: '',
@@ -215,7 +218,7 @@ export class AppController {
   async getComment() {
     const data: SortData = {
       sortBy: 'createdAt',
-      sortDirection: 'desc',
+      sortDirection: 'DESC',
       pageNumber: 1,
       pageSize: 10,
     };

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UsersSortData } from '../../base/sortData/sortData.model';
 import { Pagination } from '../../base/paginationInputDto/paginationOutput';
 import { OutputUsersType } from '../api/output/users.output.dto';
@@ -8,10 +8,14 @@ import { userMapper } from '../domain/mapper/user.mapper.for.sql';
 import { UserEntity } from '../domain/user.entity';
 import { MyEntity } from '../../auth/api/output/me.entity';
 import { randomUUID } from 'crypto';
+import { Users } from '../domain/user.sql.entity';
 
 @Injectable()
 export class UsersSqlQueryRepository {
-  constructor(@InjectDataSource() protected dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource() protected dataSource: DataSource,
+    @InjectRepository(Users) protected usersRepository: Repository<Users>,
+  ) {}
 
   async getAll(): Promise<any> {
     const result = await this.dataSource.query(`
@@ -21,38 +25,18 @@ export class UsersSqlQueryRepository {
   }
   async findUser(loginOrEmail: string): Promise<UserEntity | null> {
     try {
-      const res = await this.dataSource.query(
-        `
-    SELECT u."id",
-      u."login",
-      u."email",
-      u."_passwordHash",
-      u."recoveryCode",
-      u."createdAt",
-      e."expirationDate",
-      e."isConfirmed",
-      e."confirmationCode"
-        FROM public."users" u
-        LEFT JOIN public."email_confirmation" e
-        ON u."id" = e."userId"
-        WHERE u."login" like $1 OR u."email" like $1
-    `,
-        [loginOrEmail],
-      );
-      if (!res || res.length === 0) {
-        return null; // Пользователь не найден
-      }
-      const tokensBlackList = await this.dataSource.query(
-        `
-        SELECT  ARRAY_AGG(token)
-            FROM public."tokens_black_list" t
-            WHERE t."userId" = $1
-`,
-        [res[0].id],
-      );
-      if (!res) return null;
+      const result = await this.usersRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.emailConfirmation', 'email_confirmation')
+        .leftJoinAndSelect('user.tokensBlackList', 'TokensBlackList')
+        .where(
+          `user."login" ILIKE ${loginOrEmail} OR user."email" ILIKE ${loginOrEmail}`,
+        )
+        .getMany();
 
-      return userMapper({ ...res[0], tokensBlackList });
+      if (!result) return null;
+      debugger;
+      return userMapper(result[0]);
     } catch (e) {
       console.log(e);
       return null;
@@ -71,45 +55,37 @@ export class UsersSqlQueryRepository {
     } = sortData;
 
     const offset = (pageNumber - 1) * pageSize;
-    let res: any = [];
     try {
-      res = await this.dataSource.query(
-        `
-    SELECT u."id", u."login", u."email" , u."createdAt" 
-    FROM public."users" u
-    WHERE u."login" ILIKE $1 OR u."email" ILIKE $2
-    ORDER BY u."${sortBy}" ${sortDirection}
-    LIMIT $3 OFFSET $4
-`,
-        [
-          '%' + searchLoginTerm + '%',
-          '%' + searchEmailTerm + '%',
-          pageSize,
-          offset,
-        ],
-      );
+      const result = await this.usersRepository
+        .createQueryBuilder('user')
+        .select(['user.id', 'user.login', 'user.email', 'user.createdAt'])
+        .where(
+          'user.login ILIKE :searchLoginTerm OR user.email ILIKE :searchEmailTerm',
+          {
+            searchLoginTerm: `%${searchLoginTerm}%`,
+            searchEmailTerm: `%${searchEmailTerm}%`,
+          },
+        )
+        .orderBy(`user.${sortBy}`, sortDirection)
+        .skip(offset)
+        .take(pageSize)
+        .getManyAndCount();
+
+      debugger;
+
+      const pagesCount = Math.ceil(result[1] / pageSize);
+
+      return {
+        pagesCount,
+        page: pageNumber,
+        pageSize,
+        totalCount: result[1],
+        items: result[0],
+      };
     } catch (e) {
+      console.log(e);
       return null;
     }
-
-    const totalCount = await this.dataSource.query(
-      `
-    SELECT COUNT("id")
-    FROM public."users" u
-    WHERE u."login" ILIKE $1 OR u."email" ILIKE $2
-`,
-      ['%' + searchLoginTerm + '%', '%' + searchEmailTerm + '%'],
-    );
-
-    const pagesCount = Math.ceil(+totalCount[0].count / pageSize);
-
-    return {
-      pagesCount,
-      page: pageNumber,
-      pageSize,
-      totalCount: +totalCount[0].count,
-      items: res,
-    };
   }
   async getUserById(id: string): Promise<UserEntity | null> {
     const res = await this.dataSource.query(

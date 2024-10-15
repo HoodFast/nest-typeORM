@@ -28,55 +28,36 @@ export class UsersSqlRepository {
 
   async createUser(userData: User): Promise<OutputUsersType | null> {
     const { accountData, emailConfirmation } = userData;
-    // const userId = randomUUID();
-    // const emailId = randomUUID();
 
     try {
       const user = new Users();
+      const newEmailConfirm = new EmailConfirmation();
       user._passwordHash = accountData._passwordHash;
       user.login = accountData.login;
       user.email = accountData.email;
       user.createdAt = accountData.createdAt;
+
+      newEmailConfirm.confirmationCode = emailConfirmation.confirmationCode;
+      newEmailConfirm.expirationDate = emailConfirmation.expirationDate;
+      newEmailConfirm.isConfirmed = emailConfirmation.isConfirmed;
+      newEmailConfirm.user = user;
       const createdUser = await this.userRepository.save<Users>(user);
-      const userId = createdUser.id;
-      //   const query = `
-      //     INSERT INTO public."users"(
-      //      "_passwordHash", "login", "email", "createdAt")
-      //     VALUES ($1, $2, $3, $4);
-      // `;
 
-      // const insertUserTable = await this.dataSource.query(query, [
-      //   accountData._passwordHash,
-      //   accountData.login,
-      //   accountData.email,
-      //   accountData.createdAt,
-      // ]);
-      const queryEmail = `
-        INSERT INTO public."email_confirmation"(
-         "confirmationCode", "expirationDate", "isConfirmed", "userId")
-        VALUES ($1, $2, $3, $4);
-    `;
-      const insertEmailTable = await this.dataSource.query(queryEmail, [
-        emailConfirmation.confirmationCode,
-        emailConfirmation.expirationDate,
-        emailConfirmation.isConfirmed,
-        userId,
-      ]);
+      const createdConfirmEmail =
+        await this.emailConfirmRepository.save<EmailConfirmation>(
+          newEmailConfirm,
+        );
 
-      const result = await this.dataSource.query(
-        `
-        SELECT "id", "_passwordHash", "login", "email", "createdAt"
-        FROM public."users" as u
-        WHERE u."id" = $1
-    `,
-        [userId],
-      );
+      const res = await this.userRepository.findOne({
+        where: { id: createdUser.id },
+      });
+      if (!res) return null;
 
       return {
-        id: result[0].id,
-        login: result[0].login,
-        email: result[0].email,
-        createdAt: result[0].createdAt,
+        id: res.id,
+        login: res.login,
+        email: res.email,
+        createdAt: res.createdAt,
       };
     } catch (e) {
       console.log(e);

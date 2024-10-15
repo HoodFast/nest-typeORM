@@ -45,8 +45,8 @@ import { BlogsSqlQueryRepository } from '../infrastructure/blogs.sql.query.repos
 import { PostsSqlQueryRepository } from '../../posts/infrastructure/posts.sql.query.repository';
 
 export enum sortDirection {
-  asc = 'asc',
-  desc = 'desc',
+  asc = 'ASC',
+  desc = 'DESC',
 }
 
 export type queryBlogsInputType = {

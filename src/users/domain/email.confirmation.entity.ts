@@ -1,4 +1,11 @@
-import {BaseEntity, Column, Entity, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn} from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Users } from './user.sql.entity';
 
 @Entity()
@@ -15,5 +22,5 @@ export class EmailConfirmation extends BaseEntity {
   @ManyToOne(() => Users, (Users) => Users.id, {
     onDelete: 'CASCADE',
   })
-  user: string;
+  user: Users;
 }

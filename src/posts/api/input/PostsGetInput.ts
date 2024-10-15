@@ -1,6 +1,6 @@
 export class QueryPostInputModel {
   sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
+  sortDirection?: 'ASC' | 'DESC';
   pageNumber?: number;
   pageSize?: number;
 }

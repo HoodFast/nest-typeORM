@@ -47,7 +47,7 @@ export class UsersQueryRepository {
     const filter = {
       $or: [login, email],
     };
-    const mySortDirection = sortDirection == 'asc' ? 1 : -1;
+    const mySortDirection = sortDirection == 'ASC' ? 1 : -1;
     const users = await this.userModel
       .find(filter)
       .sort({ [`accountData.${sortBy}`]: mySortDirection })
