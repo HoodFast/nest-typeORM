@@ -72,11 +72,24 @@ export class AppController {
   }
   @Post('createuser')
   async createUser() {
-    const login = '123455';
-    const email = 'trassa@mail.ru';
+    const login = '1234551';
+    const email = 'trassa1@mail.ru';
     const password = '12345';
 
     return await this.userService.createUser(login, email, password);
+  }
+  @Post('updateNewConfirmCode')
+  async updateCode() {
+    return await this.userSqlRepository.updateNewConfirmCode(
+      '506195f2-868a-44b4-9191-7855ac3c7d52',
+      '11111111111111111111',
+    );
+  }
+  @Delete('createuser')
+  async deleteUser() {
+    return await this.userService.deleteUser(
+      '3f10e9a1-5d34-4a11-9c98-5c5e3da0c6ed',
+    );
   }
 
   @Get('get')

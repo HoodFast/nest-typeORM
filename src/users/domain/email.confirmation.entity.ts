@@ -18,7 +18,8 @@ export class EmailConfirmation extends BaseEntity {
   expirationDate: Date;
   @Column('boolean')
   isConfirmed: boolean;
-
+  @Column()
+  userId: string;
   @ManyToOne(() => Users, (Users) => Users.id, {
     onDelete: 'CASCADE',
   })

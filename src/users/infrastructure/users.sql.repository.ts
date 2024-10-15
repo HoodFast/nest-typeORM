@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { OutputUsersType } from '../api/output/users.output.dto';
@@ -93,41 +93,33 @@ export class UsersSqlRepository {
 
   async deleteUser(userId: string) {
     try {
-      const deleted = await this.dataSource.query(
-        `
-    DELETE FROM public."users" u
-    WHERE u."id" = $1
-    `,
-        [userId],
-      );
-
-      return !!deleted[1];
+      const deleteUser = await this.userRepository.delete(userId);
+      return !!deleteUser;
     } catch (e) {
       console.log(e);
     }
   }
 
   async changePass(userId: string, hash: string): Promise<boolean> {
-    const res = await this.dataSource.query(
-      `
-        UPDATE public."users" u
-            SET  "_passwordHash"= $2
-            WHERE u."id" = $1;
-    `,
-      [userId, hash],
-    );
-    return !!res[1];
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException();
+    user._passwordHash = hash;
+    const saveUser = await this.userRepository.save(user);
+    return !!saveUser;
   }
 
   async updateNewConfirmCode(userId: string, code: string): Promise<boolean> {
-    const res = await this.dataSource.query(
-      `
-        UPDATE public."email_confirmation" e
-            SET  "confirmationCode"= $2
-            WHERE e."userId" = $1;
-    `,
-      [userId, code],
-    );
-    return !!res[1];
+    try {
+      const emailConfirmed = await this.emailConfirmRepository.findOne({
+        where: { userId },
+      });
+      if (!emailConfirmed) throw new NotFoundException();
+      emailConfirmed.confirmationCode = code;
+      const save = await this.emailConfirmRepository.save(emailConfirmed);
+      return !!save;
+    } catch (e) {
+      console.log(e);
+      throw new Error();
+    }
   }
 }
