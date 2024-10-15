@@ -5,27 +5,18 @@ import { OutputUsersType } from '../api/output/users.output.dto';
 import { Users } from '../domain/user.sql.entity';
 import { User } from '../domain/user.schema';
 import { EmailConfirmation } from '../domain/email.confirmation.entity';
+import { TokensBlackList } from '../domain/tokens.black.list.sql.entity';
 
 @Injectable()
 export class UsersSqlRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
     @InjectRepository(Users) protected userRepository: Repository<Users>,
+    @InjectRepository(TokensBlackList)
+    protected tokenRepository: Repository<TokensBlackList>,
     @InjectRepository(EmailConfirmation)
     protected emailConfirmRepository: Repository<EmailConfirmation>,
-    // @InjectRepository(Users)
-    // private userRepository: Repository<Users>,
-    // @InjectRepository(EmailConfirmation)
-    // private emailRepository: Repository<EmailConfirmation>,
   ) {}
-
-  async getAll(): Promise<any> {
-    const result = await this.dataSource.query(`
-    SELECT id, "login"
-        FROM public."users";`);
-    return result;
-  }
-
   async createUser(userData: User): Promise<OutputUsersType | null> {
     const { accountData, emailConfirmation } = userData;
 
@@ -43,10 +34,9 @@ export class UsersSqlRepository {
       newEmailConfirm.user = user;
       const createdUser = await this.userRepository.save<Users>(user);
 
-      const createdConfirmEmail =
-        await this.emailConfirmRepository.save<EmailConfirmation>(
-          newEmailConfirm,
-        );
+      await this.emailConfirmRepository.save<EmailConfirmation>(
+        newEmailConfirm,
+      );
 
       const res = await this.userRepository.findOne({
         where: { id: createdUser.id },
@@ -66,57 +56,37 @@ export class UsersSqlRepository {
   }
 
   async blackListCheck(userId: string, token: string): Promise<boolean> {
-    const res = await this.dataSource.query(
-      `
-        SELECT  ARRAY_AGG(token)
-            FROM public."tokens_black_list" t
-            WHERE t."userId" = $1`,
-      [userId],
-    );
-    if (!res) return false;
+    const result = await this.tokenRepository.findOne({
+      where: { token: token },
+    });
 
-    const blackList = res[0].array_agg;
-    const check = blackList?.includes(token);
-
-    return !!check;
+    return !!result;
   }
 
   async doesExistByLogin(login: string): Promise<boolean> {
-    const existCheck = await this.dataSource.query(
-      `
-    SELECT id
-        FROM public."users" u
-        WHERE u."login" = $1 
-    `,
-      [login],
-    );
-    return !!existCheck[0];
+    const result = await this.userRepository.findOne({ where: { login } });
+    return !!result;
   }
 
   async doesExistByEmail(email: string): Promise<boolean> {
-    const existCheck = await this.dataSource.query(
-      `
-    SELECT id
-        FROM public."users" u
-        WHERE  u."email" = $1
-    `,
-      [email],
-    );
-    return !!existCheck[0];
+    const result = await this.userRepository.findOne({ where: { email } });
+    return !!result;
   }
 
   async confirmEmail(userId: string) {
     try {
-      await this.dataSource.query(
-        `
-        UPDATE public."email_confirmation" e
-            SET  "isConfirmed"=true
-            WHERE e."userId" = $1;
-    `,
-        [userId],
-      );
-      return true;
+      const result = await this.emailConfirmRepository
+        .createQueryBuilder()
+        .update(EmailConfirmation)
+        .set({
+          isConfirmed: true,
+        })
+        .where('email_confirmation."userId" = :userId', { userId })
+        .execute();
+
+      return !!result.affected;
     } catch (e) {
+      console.log(e);
       return false;
     }
   }

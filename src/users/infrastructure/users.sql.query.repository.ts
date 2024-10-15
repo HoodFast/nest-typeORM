@@ -7,22 +7,24 @@ import { OutputUsersType } from '../api/output/users.output.dto';
 import { userMapper } from '../domain/mapper/user.mapper.for.sql';
 import { UserEntity } from '../domain/user.entity';
 import { MyEntity } from '../../auth/api/output/me.entity';
-import { randomUUID } from 'crypto';
 import { Users } from '../domain/user.sql.entity';
+import { TokensBlackList } from '../domain/tokens.black.list.sql.entity';
 
 @Injectable()
 export class UsersSqlQueryRepository {
   constructor(
     @InjectDataSource() protected dataSource: DataSource,
     @InjectRepository(Users) protected usersRepository: Repository<Users>,
+    @InjectRepository(TokensBlackList)
+    protected tokensRepository: Repository<TokensBlackList>,
   ) {}
 
-  async getAll(): Promise<any> {
-    const result = await this.dataSource.query(`
-    SELECT id, "login"
-        FROM public."users";`);
-    return result;
-  }
+  // async getAll(): Promise<any> {
+  //   const result = await this.dataSource.query(`
+  //   SELECT id, "login"
+  //       FROM public."users";`);
+  //   return result;
+  // }
   async findUser(loginOrEmail: string): Promise<UserEntity | null> {
     try {
       const result = await this.usersRepository
@@ -88,101 +90,58 @@ export class UsersSqlQueryRepository {
     }
   }
   async getUserById(id: string): Promise<UserEntity | null> {
-    const res = await this.dataSource.query(
-      `
-    SELECT u."id",
-      u."login",
-      u."email",
-      u."_passwordHash",
-      u."recoveryCode",
-      u."createdAt",
-      e."expirationDate",
-      e."isConfirmed",
-      e."confirmationCode"
-        FROM public."users" u
-        LEFT JOIN public."email_confirmation" e
-        ON u."id" = e."userId"
-        WHERE u."id" = $1
-    `,
-      [id],
-    );
-    const tokensBlackList = await this.dataSource.query(
-      `
-        SELECT  ARRAY_AGG(token)
-            FROM public."tokens_black_list" t
-            WHERE t."userId" = $1
-`,
-      [id],
-    );
+    const result = await this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.emailConfirmation', 'email_confirmation')
+      .leftJoinAndSelect('user.tokensBlackList', 'TokensBlackList')
+      .where('user.id = :id', { id })
+      .getOne();
 
-    if (!res[0]) return null;
-    return userMapper({ ...res[0], tokensBlackList });
+    if (!result) return null;
+    return userMapper(result);
   }
   async getUserByCode(code: string): Promise<UserEntity | null> {
-    const res = await this.dataSource.query(
-      `
-    SELECT u."id",
-      u."login",
-      u."email",
-      u."_passwordHash",
-      u."recoveryCode",
-      u."createdAt",
-      e."expirationDate",
-      e."isConfirmed",
-      e."confirmationCode"
-        FROM public."users" u
-        LEFT JOIN public."email_confirmation" e
-        ON u."id" = e."userId"
-        WHERE e."confirmationCode" = $1
-    `,
-      [code],
-    );
-    if (!res[0]) return null;
-    const tokensBlackList = await this.dataSource.query(
-      `
-        SELECT  ARRAY_AGG(token)
-            FROM public."tokens_black_list" t
-            WHERE t."userId" = $1
-`,
-      [res[0].id],
-    );
+    const result = await this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.emailConfirmation', 'email_confirmation')
+      .leftJoinAndSelect('user.tokensBlackList', 'TokensBlackList')
+      .where('email_confirmation.confirmationCode = :code', { code })
+      .getOne();
+    if (!result) return null;
 
-    return userMapper({ ...res[0], tokensBlackList });
+    return userMapper(result);
   }
   async getMe(userId: string): Promise<MyEntity | null> {
-    const user = await this.dataSource.query(
-      `
-    SELECT u."id", u."login", u."email"
-    FROM public."users" u
-      WHERE u."id" = $1
-    `,
-      [userId],
-    );
-
-    if (!user[0]) return null;
+    const result = await this.usersRepository
+      .createQueryBuilder('user')
+      .where('user.id = :userId', { userId })
+      .getOne();
+    if (!result) return null;
     return {
-      id: user[0].id,
+      id: result.id,
       accountData: {
-        login: user[0].login,
-        email: user[0].email,
+        login: result.login,
+        email: result.email,
       },
     };
   }
   async addTokenToBlackList(userId: string, token: string) {
     try {
-      const tokenId = randomUUID();
-      await this.dataSource.query(
-        `
-            INSERT INTO public."tokens_black_list"(
-            "id","token","userId")
-            VALUES($1,$2,$3);
-    `,
-        [tokenId, token, userId],
-      );
-      return true;
+      const user = await this.usersRepository
+        .createQueryBuilder('user')
+        .where('user.id = :userId', { userId })
+        .getOne();
+      if (!user) return null;
+      const blackToken = new TokensBlackList();
+      blackToken.token = token;
+      blackToken.user = user;
+      const addedTokenToBlackList =
+        await this.tokensRepository.save(blackToken);
+
+      return !!addedTokenToBlackList;
     } catch (e) {
       console.log(e);
-      return false;
+      throw new Error('add token black list is wrong');
     }
   }
 }

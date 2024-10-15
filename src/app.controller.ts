@@ -42,6 +42,34 @@ export class AppController {
   async getUsers() {
     return this.userSqlQueryRepository.findUser('123455');
   }
+  @Get('getuserbyid')
+  async getUsersId() {
+    return this.userSqlQueryRepository.getUserById(
+      '506195f2-868a-44b4-9191-7855ac3c7d52',
+    );
+  }
+  @Get('getme')
+  async getMe() {
+    return this.userSqlQueryRepository.getMe(
+      '506195f2-868a-44b4-9191-7855ac3c7d52',
+    );
+  }
+  @Get('confirmEmail')
+  async addTokenToBlackList() {
+    return this.userSqlRepository.confirmEmail(
+      '506195f2-868a-44b4-9191-7855ac3c7d52',
+    );
+  }
+  @Get('loginexist')
+  async existByLogin() {
+    return this.userSqlRepository.doesExistByEmail('trassa@mail.ru');
+  }
+  @Get('getuserbycode')
+  async getUsersCode() {
+    return this.userSqlQueryRepository.getUserByCode(
+      '4446803e-10e1-42ea-b46f-5a0ee69668f4',
+    );
+  }
   @Post('createuser')
   async createUser() {
     const login = '123455';
