@@ -14,5 +14,5 @@ export class SqlDataBaseSettings {
   SQL_PASS: string = this.environmentVariables.SQL_PASS;
   @IsOptional()
   @IsString()
-  SQL_DATABASE: string = this.environmentVariables.SQL_HOST;
+  SQL_DATABASE: string = this.environmentVariables.SQL_DATABASE;
 }

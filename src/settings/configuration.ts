@@ -14,7 +14,7 @@ export type ConfigServiceType = ConfigService<ConfigurationType>;
 export class Configuration {
   @ValidateNested()
   apiSettings: ApiSettings;
-  @ValidateNested()
+  // @ValidateNested()
   // databaseSettings: DataBaseSettings;
   @ValidateNested()
   sqlDataBaseSettings: SqlDataBaseSettings;

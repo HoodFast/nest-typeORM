@@ -1,5 +1,5 @@
 import { EnvironmentVariable } from '../configuration';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class ApiSettings {
   constructor(private environmentVariables: EnvironmentVariable) {}
