@@ -59,28 +59,23 @@ export class SessionSqlRepository {
     return !!result.affected;
   }
   async deleteByDeviceId(deviceId: string): Promise<boolean> {
-    const deletedSession = await this.dataSource.query(
-      `
-     DELETE FROM public.sessions
-            WHERE "deviceId" = $1;
-    `,
-      [deviceId],
-    );
-    return !!deletedSession[1];
+    const deletedSession = await this.sessionRepository.delete({ deviceId });
+    return !!deletedSession.affected;
   }
   async getSessionForRefreshDecodeToken(iat: Date, deviceId: string) {
     try {
       const updatedIat = new Date(iat.getTime() + 3 * 60 * 60 * 1000);
-      const metaData = await this.dataSource.query(
-        `
-     SELECT id, iat, "expireDate", "deviceId", ip, title, "userId"
-        FROM public.sessions 
-        WHERE ("iat" = $1 OR "iat" = $2) AND "deviceId" = $3;
-    `,
-        [iat, updatedIat, deviceId],
-      );
 
-      return metaData[0];
+      const result = await this.sessionRepository
+        .createQueryBuilder('sessions')
+        .where('sessions.iat = :iat OR sessions.iat = :updatedIat', {
+          iat,
+          updatedIat,
+        })
+        .andWhere('sessions.deviceId = :deviceId', { deviceId })
+        .getMany();
+      debugger;
+      return result[0];
     } catch (e) {
       console.log(e);
       return null;
