@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { UserTestManager } from './users/user.test.manager';
 import { randomUUID } from 'crypto';
+import { SessionEntity } from '../src/sessions/domain/session.entity';
 
 export class TestManager {
   constructor(protected readonly app: INestApplication) {}
@@ -58,5 +59,19 @@ export class TestManager {
 
     const accessToken = userResponse1.body.accessToken;
     return { accessToken, refreshToken };
+  }
+  async checkSession(session: SessionEntity | null) {
+    expect(session).toBeDefined();
+    expect(session).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        iat: expect.any(Date),
+        expireDate: expect.any(Date),
+        userId: expect.any(String),
+        deviceId: expect.any(String),
+        ip: expect.any(String),
+        title: expect.any(String),
+      }),
+    );
   }
 }

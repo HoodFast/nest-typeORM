@@ -39,7 +39,7 @@ export class UpdateCommentLikesUseCase
     command: UpdateCommentLikesCommand,
   ): Promise<InterlayerNotice<UpdateOutputData>> {
     const notice = new InterlayerNotice<UpdateOutputData>();
-    debugger;
+
     const comment: CommentsOutputType | null =
       await this.commentsQueryRepository.getCommentById(command.commentId);
     if (!comment) {

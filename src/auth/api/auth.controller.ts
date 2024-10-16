@@ -22,7 +22,6 @@ import { recoveryPassInputDto } from './input/new.password.input';
 import { JwtService } from '../infrastructure/jwt.service';
 import { AccessTokenAuthGuard } from '../../guards/access.token.auth.guard';
 import { UserId } from '../../decorators/userId';
-import { UsersQueryRepository } from '../../users/infrastructure/users.query.repository';
 import { confirmDto } from '../../users/api/input/conf.code.dto';
 import { UserInputDto } from '../../users/api/input/userInput.dto';
 import { emailResendingDto } from './input/email.resending.input';

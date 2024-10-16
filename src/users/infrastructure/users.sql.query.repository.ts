@@ -32,12 +32,13 @@ export class UsersSqlQueryRepository {
         .leftJoinAndSelect('user.emailConfirmation', 'email_confirmation')
         .leftJoinAndSelect('user.tokensBlackList', 'TokensBlackList')
         .where(
-          `user."login" ILIKE ${loginOrEmail} OR user."email" ILIKE ${loginOrEmail}`,
+          `user.login ILIKE :loginOrEmail OR user.email ILIKE :loginOrEmail`,
+          { loginOrEmail },
         )
         .getMany();
 
       if (!result) return null;
-      debugger;
+
       return userMapper(result[0]);
     } catch (e) {
       console.log(e);
@@ -72,8 +73,6 @@ export class UsersSqlQueryRepository {
         .skip(offset)
         .take(pageSize)
         .getManyAndCount();
-
-      debugger;
 
       const pagesCount = Math.ceil(result[1] / pageSize);
 

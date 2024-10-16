@@ -1,24 +1,52 @@
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Session, SessionDocument } from '../domain/session.schema';
 import { Injectable } from '@nestjs/common';
 import { SessionsOutputType } from '../api/output/session.output';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { Sessions } from '../domain/session.sql.entity';
 @Injectable()
 export class SessionSqlQueryRepository {
-  constructor(@InjectDataSource() private dataSource: DataSource) {}
-  async getAllSessions(userId: string): Promise<SessionsOutputType[] | null> {
-    const sessions = await this.dataSource.query(
-      `
-    SELECT  ip, title, iat as "lastActiveDate", "deviceId"
-        FROM public.sessions s
-        WHERE s."userId" = $1
-    `,
-      [userId],
-    );
+  constructor(
+    @InjectDataSource() private dataSource: DataSource,
+    @InjectRepository(Sessions) private sessionRepository: Repository<Sessions>,
+  ) {}
 
-    if (!sessions[0]) return null;
-    return sessions;
+  async getAllSessions(userId: string): Promise<SessionsOutputType[] | null> {
+    try {
+      const sessions = await this.sessionRepository
+        .createQueryBuilder('sessions')
+        .select([
+          'sessions.ip',
+          'sessions.title',
+          'sessions.iat',
+          'sessions.deviceId',
+        ])
+        .where('sessions.userId = :userId', { userId })
+        .getManyAndCount();
+
+      if (!sessions.length) return null;
+      return sessions[0].map((i) => ({
+        ip: i.ip,
+        title: i.title,
+        lastActiveDate: i.iat,
+        deviceId: i.deviceId,
+      }));
+    } catch (e) {
+      console.log(e);
+      return null;
+    }
+  }
+  async getAll(userId: string) {
+    try {
+      const sessions = await this.sessionRepository
+        .createQueryBuilder('sessions')
+        .where('sessions.userId = :userId', { userId })
+        .getManyAndCount();
+
+      if (!sessions.length) return null;
+      return sessions[0];
+    } catch (e) {
+      console.log(e);
+      return null;
+    }
   }
 }

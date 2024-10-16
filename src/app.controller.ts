@@ -18,6 +18,8 @@ import { likesStatuses } from './posts/domain/post.schema';
 import { CommentsSqlRepository } from './comments/infrastructure/comments.sql.repository';
 import { CommentDbType } from './comments/domain/comment.schema';
 import { CommentsSqlQueryRepository } from './comments/infrastructure/comments.sql.query.repository';
+import { SessionRepository } from './sessions/infrastructure/session.repository';
+import { SessionSqlRepository } from './sessions/infrastructure/session.sql.repository';
 
 @Controller()
 export class AppController {
@@ -32,6 +34,7 @@ export class AppController {
     protected postSqlRepository: PostsSqlRepository,
     protected commentsSqlRepository: CommentsSqlRepository,
     protected commentsSqlQueryRepository: CommentsSqlQueryRepository,
+    protected sessionRepository: SessionSqlRepository,
   ) {}
 
   @Get()
@@ -286,5 +289,12 @@ export class AppController {
       'b8613099-f652-4153-8e68-b325f69c371f',
     );
     return res;
+  }
+  @Get('getSessionByUserId')
+  async getSessionById() {
+    return this.sessionRepository.getSessionForUserId(
+      'ac93b245-ecfe-4b72-8158-a1328c3b37d5',
+      'PostmanRuntime/7.42.0',
+    );
   }
 }

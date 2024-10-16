@@ -16,7 +16,6 @@ export class CommentsSqlQueryRepository {
     userId?: string,
   ): Promise<CommentsOutputType | null> {
     try {
-      debugger;
       const comment = await this.dataSource.query(
         `
     SELECT c."id",

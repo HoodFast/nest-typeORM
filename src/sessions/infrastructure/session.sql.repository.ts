@@ -1,56 +1,52 @@
-import { ObjectId } from 'mongodb';
 import { Injectable } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { SessionEntity } from '../domain/session.entity';
+import { Sessions } from '../domain/session.sql.entity';
 @Injectable()
 export class SessionSqlRepository {
-  constructor(@InjectDataSource() protected dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource() protected dataSource: DataSource,
+    @InjectRepository(Sessions)
+    protected sessionRepository: Repository<Sessions>,
+  ) {}
   async getSessionForUserId(
     userId: string,
     title: string,
   ): Promise<SessionEntity | null> {
     try {
-      const meta = await this.dataSource.query(
-        `
-      SELECT id, iat, "expireDate", "deviceId", ip, title, "userId"
-        FROM public.sessions s
-        WHERE s."userId" = $1 AND s."title" = $2
-      `,
-        [userId, title],
-      );
-      return meta;
+      const session = await this.sessionRepository.findOne({
+        where: { userId, title },
+      });
+      if (!session) return null;
+      return session;
     } catch (e) {
       console.log(e);
       return null;
     }
   }
   async getSessionByDeviceId(deviceId: string): Promise<SessionEntity | null> {
-    const res = await this.dataSource.query(
-      `
-         SELECT id, iat, "expireDate", "deviceId", ip, title, "userId"
-            FROM public.sessions 
-            WHERE "deviceId" = $1
-    `,
-      [deviceId],
-    );
-    return res[0];
+    const result = await this.sessionRepository.findOne({
+      where: { deviceId },
+    });
+    if (!result) return null;
+    return result;
   }
 
-  async createNewSession(tokenMetaData: SessionEntity) {
+  async createNewSession(tokenMetaData: Omit<SessionEntity, 'id'>) {
     try {
-      const { id, iat, title, deviceId, ip, expireDate, userId } =
-        tokenMetaData;
+      const { iat, title, deviceId, ip, expireDate, userId } = tokenMetaData;
 
-      const session = await this.dataSource.query(
-        `
-            INSERT INTO public.sessions(
-            id, iat, "expireDate", "deviceId", ip, title, "userId")
-            VALUES ($1, $2, $3, $4, $5, $6, $7);
-    `,
-        [id, iat, expireDate, deviceId, ip, title, userId],
-      );
-      return session;
+      const session = new Sessions();
+      session.iat = iat;
+      session.deviceId = deviceId;
+      session.ip = ip;
+      session.title = title;
+      session.userId = userId;
+      session.expireDate = expireDate;
+      const savedSession = await this.sessionRepository.save(session);
+
+      return savedSession;
     } catch (e) {
       console.log(e);
 
@@ -58,15 +54,9 @@ export class SessionSqlRepository {
     }
   }
   async deleteById(id: string): Promise<boolean> {
-    const deleteSession = await this.dataSource.query(
-      `
-        DELETE FROM public.sessions
-            WHERE "id" = $1;
-    `,
-      [id],
-    );
+    const result = await this.sessionRepository.delete(id);
 
-    return !!deleteSession[1];
+    return !!result.affected;
   }
   async deleteByDeviceId(deviceId: string): Promise<boolean> {
     const deletedSession = await this.dataSource.query(

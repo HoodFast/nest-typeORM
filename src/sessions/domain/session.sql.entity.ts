@@ -1,9 +1,16 @@
-import { BaseEntity, Column, Entity, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Users } from '../../users/domain/user.sql.entity';
 
 @Entity()
 export class Sessions extends BaseEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column()
   iat: Date;
@@ -12,7 +19,9 @@ export class Sessions extends BaseEntity {
   @ManyToOne(() => Users, (Users) => Users.id, {
     onDelete: 'CASCADE',
   })
-  user: string;
+  user: Users;
+  @Column()
+  userId: string;
   @Column()
   deviceId: string;
   @Column()
