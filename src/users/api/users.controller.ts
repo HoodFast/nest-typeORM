@@ -13,7 +13,6 @@ import {
 import { UserInputDto } from './input/userInput.dto';
 import { UsersService } from '../application/users.service';
 import { UsersSortData } from '../../base/sortData/sortData.model';
-import { UsersQueryRepository } from '../infrastructure/users.query.repository';
 import { sortDirection } from '../../blogs/api/blogs.controller';
 import { AuthGuard } from '../../guards/auth.guard';
 import { OutputUsersType } from './output/users.output.dto';
@@ -46,7 +45,9 @@ export class UsersController {
       searchLoginTerm: input.searchLoginTerm ?? '',
       searchEmailTerm: input.searchEmailTerm ?? '',
       sortBy: input.sortBy ?? 'createdAt',
-      sortDirection: input.sortDirection ?? sortDirection.desc,
+      sortDirection:
+        (input.sortDirection.toUpperCase() as sortDirection) ??
+        sortDirection.desc,
       pageNumber: input.pageNumber ? +input.pageNumber : 1,
       pageSize: input.pageSize ? +input.pageSize : 10,
     };
