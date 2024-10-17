@@ -41,13 +41,15 @@ export class UsersController {
   async getAllUsers(
     @Query() input: UsersSortData,
   ): Promise<Pagination<OutputUsersType>> {
+    let mySortDirection = sortDirection.desc;
+    if (input.sortDirection) {
+      mySortDirection = input.sortDirection.toUpperCase() as sortDirection;
+    }
     const sortData: UsersSortData = {
       searchLoginTerm: input.searchLoginTerm ?? '',
       searchEmailTerm: input.searchEmailTerm ?? '',
       sortBy: input.sortBy ?? 'createdAt',
-      sortDirection:
-        (input.sortDirection.toUpperCase() as sortDirection) ??
-        sortDirection.desc,
+      sortDirection: mySortDirection,
       pageNumber: input.pageNumber ? +input.pageNumber : 1,
       pageSize: input.pageSize ? +input.pageSize : 10,
     };
