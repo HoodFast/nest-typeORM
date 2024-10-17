@@ -45,6 +45,7 @@ export class UsersController {
     if (input.sortDirection) {
       mySortDirection = input.sortDirection.toUpperCase() as sortDirection;
     }
+
     const sortData: UsersSortData = {
       searchLoginTerm: input.searchLoginTerm ?? '',
       searchEmailTerm: input.searchEmailTerm ?? '',
