@@ -78,6 +78,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteUser(@Param('id') id: string) {
+    console.log();
     const deleteUser = await this.userService.deleteUser(id);
     if (!deleteUser) throw new NotFoundException();
     return;
