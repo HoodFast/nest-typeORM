@@ -35,11 +35,11 @@ export class UsersSqlQueryRepository {
           `user.login ILIKE :loginOrEmail OR user.email ILIKE :loginOrEmail`,
           { loginOrEmail },
         )
-        .getMany();
+        .getOne();
 
       if (!result) return null;
 
-      return userMapper(result[0]);
+      return userMapper(result);
     } catch (e) {
       console.log(e);
       return null;
