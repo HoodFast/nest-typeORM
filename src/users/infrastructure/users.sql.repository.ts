@@ -94,7 +94,8 @@ export class UsersSqlRepository {
   async deleteUser(userId: string) {
     try {
       const deleteUser = await this.userRepository.delete(userId);
-      return !!deleteUser;
+      if (!deleteUser.affected) return null;
+      return !!deleteUser.affected;
     } catch (e) {
       console.log(e);
     }
