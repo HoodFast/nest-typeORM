@@ -83,7 +83,7 @@ export class UsersSqlRepository {
         })
         .where('email_confirmation."userId" = :userId', { userId })
         .execute();
-
+      console.log();
       return !!result.affected;
     } catch (e) {
       console.log(e);
