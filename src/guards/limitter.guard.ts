@@ -17,7 +17,7 @@ export type rateLimitDbType = {
 @Injectable()
 export class Limiter implements CanActivate {
   limitListDB: rateLimitDbType[] = [];
-  constructor(private userService: UsersService) {}
+  constructor() {}
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {

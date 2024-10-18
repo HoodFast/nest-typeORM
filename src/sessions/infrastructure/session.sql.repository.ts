@@ -54,7 +54,7 @@ export class SessionSqlRepository {
     }
   }
   async deleteById(id: string): Promise<boolean> {
-    const result = await this.sessionRepository.delete(id);
+    const result = await this.sessionRepository.delete({ id });
 
     return !!result.affected;
   }

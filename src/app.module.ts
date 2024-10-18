@@ -4,27 +4,16 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PostsController } from './posts/api/posts.controller';
 import { PostService } from './posts/application/posts.service';
-import { PostsRepository } from './posts/infrastructure/posts.repository';
-import { MongooseModule } from '@nestjs/mongoose';
 import { BlogsController } from './blogs/api/blogs.controller';
-import { BlogsRepository } from './blogs/infrastructure/blogs.repository';
-import { BlogsQueryRepository } from './blogs/infrastructure/blogs.query.repository';
 import { BlogService } from './blogs/application/blogs.service';
-import { PostsQueryRepository } from './posts/infrastructure/posts.query.repository';
-import { Comment, CommentSchema } from './comments/domain/comment.schema';
-import { User, UsersSchema } from './users/domain/user.schema';
 import { UsersService } from './users/application/users.service';
-import { UsersRepository } from './users/infrastructure/users.repository';
-import { UsersQueryRepository } from './users/infrastructure/users.query.repository';
 import { TestingSqlQueryRepository } from './testing/infrastructure/testing.query.repository';
 import { UsersController } from './users/api/users.controller';
 import { TestingController } from './testing/api/testing.controller';
-import { CommentsQueryRepository } from './comments/infrastructure/comments.query.repository';
 import { AuthService } from './auth/application/auth.service';
 import { JwtService } from './auth/infrastructure/jwt.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth/api/auth.controller';
-import { Session, SessionSchema } from './sessions/domain/session.schema';
 import { EmailService } from './auth/infrastructure/email.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration, {
@@ -44,11 +33,8 @@ import { UpdateCommentLikesUseCase } from './comments/api/use-cases/update-comme
 import { UpdateCommentBodyUseCase } from './comments/api/use-cases/update-comment-body.usecase';
 import { DeleteCommentUseCase } from './comments/api/use-cases/delete-comment.usecase';
 import { CommentsController } from './comments/api/comments.controller';
-import { CommentsRepository } from './comments/infrastructure/comments.repository';
-import { SessionRepository } from './sessions/infrastructure/session.repository';
 import { BlogExistsValidator } from './base/validate/blog.exist.validate';
 import { SecurityController } from './sessions/api/security.controller';
-import { SessionQueryRepository } from './sessions/infrastructure/session.query.repository';
 import { DeleteAllSessionsUseCase } from './sessions/api/useCases/delete-all-sessions.usecase';
 import { DeleteSessionByIdUseCase } from './sessions/api/useCases/delete-session-by-id.usecase';
 import { GetAllSessionUseCase } from './sessions/api/useCases/get-all-sessions.usecase';
@@ -65,8 +51,6 @@ import { BlogsSqlQueryRepository } from './blogs/infrastructure/blogs.sql.query.
 import { LikePost } from './posts/domain/likePost.sql.entity';
 import { Blogs } from './blogs/domain/blog.sql.entity';
 import { Posts } from './posts/domain/post.sql.entity';
-import { Post, PostSchema } from './posts/domain/post.schema';
-import { Blog, BlogSchema } from './blogs/domain/blog.schema';
 import { PostsSqlQueryRepository } from './posts/infrastructure/posts.sql.query.repository';
 import { PostsSqlRepository } from './posts/infrastructure/posts.sql.repository';
 import { BlogsSaController } from './blogs/api/blogs.sa.controller';
@@ -76,6 +60,8 @@ import { DeleteSaPostUseCase } from './posts/api/use-cases/delete-sa-post.usecas
 import { Comments, CommentsLikes } from './comments/domain/comment.sql.entity';
 import { CommentsSqlRepository } from './comments/infrastructure/comments.sql.repository';
 import { CommentsSqlQueryRepository } from './comments/infrastructure/comments.sql.query.repository';
+import { RateLimiterGuard, RateLimiterModule } from 'nestjs-rate-limiter';
+import { APP_GUARD } from '@nestjs/core';
 
 const useCases = [
   CreateBlogUseCase,
@@ -125,6 +111,7 @@ const services = [
 @Module({
   imports: [
     CqrsModule,
+    RateLimiterModule.register({ points: 5, duration: 10 }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
@@ -197,6 +184,7 @@ const services = [
     PostsSaController,
   ],
   providers: [
+    { provide: APP_GUARD, useClass: RateLimiterGuard },
     CommentsSqlQueryRepository,
     CommentsSqlRepository,
     BlogsSqlRepository,
