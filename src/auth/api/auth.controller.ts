@@ -27,11 +27,6 @@ import { UserInputDto } from '../../users/api/input/userInput.dto';
 import { emailResendingDto } from './input/email.resending.input';
 import { RefreshTokenGuard } from '../../guards/refresh-token.guards';
 import { UsersSqlQueryRepository } from '../../users/infrastructure/users.sql.query.repository';
-import {
-  RateLimit,
-  RateLimiterGuard,
-  RateLimiterModule,
-} from 'nestjs-rate-limiter';
 
 @Controller('auth')
 export class AuthController {
@@ -92,7 +87,7 @@ export class AuthController {
     // // if (!deleteSession) throw new UnauthorizedException();
     return;
   }
-  @UseGuards(RateLimiterGuard)
+  @UseGuards(Limiter)
   @HttpCode(204)
   @Post('registration')
   async registration(@Body() data: UserInputDto) {

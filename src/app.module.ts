@@ -60,8 +60,6 @@ import { DeleteSaPostUseCase } from './posts/api/use-cases/delete-sa-post.usecas
 import { Comments, CommentsLikes } from './comments/domain/comment.sql.entity';
 import { CommentsSqlRepository } from './comments/infrastructure/comments.sql.repository';
 import { CommentsSqlQueryRepository } from './comments/infrastructure/comments.sql.query.repository';
-import { RateLimiterGuard, RateLimiterModule } from 'nestjs-rate-limiter';
-import { APP_GUARD } from '@nestjs/core';
 
 const useCases = [
   CreateBlogUseCase,
@@ -111,7 +109,7 @@ const services = [
 @Module({
   imports: [
     CqrsModule,
-    RateLimiterModule.register({ points: 5, duration: 10 }),
+
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
@@ -184,7 +182,6 @@ const services = [
     PostsSaController,
   ],
   providers: [
-    { provide: APP_GUARD, useClass: RateLimiterGuard },
     CommentsSqlQueryRepository,
     CommentsSqlRepository,
     BlogsSqlRepository,
