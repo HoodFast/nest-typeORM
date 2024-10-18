@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { UsersService } from '../users/application/users.service';
 import { Observable } from 'rxjs';
 import { Request } from 'express';
@@ -29,8 +35,7 @@ export class Limiter implements CanActivate {
       this.limitListDB.push({ ip, URL, date });
       return true;
     } else {
-      return true;
-      // throw new HttpException('error', HttpStatus.TOO_MANY_REQUESTS);
+      throw new HttpException('error', HttpStatus.TOO_MANY_REQUESTS);
     }
   }
 }
