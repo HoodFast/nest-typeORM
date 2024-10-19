@@ -28,7 +28,7 @@ export class Limiter implements CanActivate {
     const date = new Date();
     const limitList = this.limitListDB.filter(
       // @ts-ignore
-      (i) => URL === i.URL && ip === i.ip && Math.abs(i.date - date) < 9000,
+      (i) => URL === i.URL && ip === i.ip && Math.abs(i.date - date) < 11000,
     );
 
     if (limitList.length < 5) {
