@@ -39,3 +39,28 @@ export class Limiter implements CanActivate {
     }
   }
 }
+@Injectable()
+export class LimiterForRegistration implements CanActivate {
+  limitListDB: rateLimitDbType[] = [];
+  constructor() {}
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    const request: Request = context.switchToHttp().getRequest();
+    const ip = request.ip;
+    if (!ip) return false;
+    const URL = request.originalUrl;
+    const date = new Date();
+    const limitList = this.limitListDB.filter(
+      // @ts-ignore
+      (i) => URL === i.URL && ip === i.ip && Math.abs(i.date - date) < 20000,
+    );
+
+    if (limitList.length < 5) {
+      this.limitListDB.push({ ip, URL, date });
+      return true;
+    } else {
+      throw new HttpException('error', HttpStatus.TOO_MANY_REQUESTS);
+    }
+  }
+}

@@ -16,7 +16,7 @@ import { LoginDto } from './input/login.dto';
 import { Request, Response } from 'express';
 import { AuthService } from '../application/auth.service';
 import { UsersService } from '../../users/application/users.service';
-import { Limiter } from '../../guards/limitter.guard';
+import { Limiter, LimiterForRegistration } from '../../guards/limitter.guard';
 import { recoveryPass } from './input/recovery.password.input';
 import { recoveryPassInputDto } from './input/new.password.input';
 import { JwtService } from '../infrastructure/jwt.service';
@@ -87,7 +87,7 @@ export class AuthController {
     // // if (!deleteSession) throw new UnauthorizedException();
     return;
   }
-  @UseGuards(Limiter)
+  @UseGuards(LimiterForRegistration)
   @HttpCode(204)
   @Post('registration')
   async registration(@Body() data: UserInputDto) {
