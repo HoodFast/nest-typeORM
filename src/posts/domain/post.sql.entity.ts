@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { LikePost } from './likePost.sql.entity';
 import { Blogs } from '../../blogs/domain/blog.sql.entity';
@@ -16,7 +17,7 @@ export enum likesStatuses {
 }
 @Entity()
 export class Posts extends BaseEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column()
   title: string;

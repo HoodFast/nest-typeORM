@@ -1,20 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Post, PostDocument } from '../domain/post.schema';
 
-import { postMapper, PostType } from './mappers/post.mapper';
+import { postMapper, postSqlMapper, PostType } from './mappers/post.mapper';
 import { Pagination } from '../../base/paginationInputDto/paginationOutput';
 import { SortData } from '../../base/sortData/sortData.model';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { BlogsSqlQueryRepository } from '../../blogs/infrastructure/blogs.sql.query.repository';
-import { InjectDataSource } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { Posts } from '../domain/post.sql.entity';
 
 @Injectable()
 export class PostsSqlQueryRepository {
   constructor(
     protected blogsQueryRepository: BlogsSqlQueryRepository,
     @InjectDataSource() protected dataSource: DataSource,
+    @InjectRepository(Posts) protected postRepository: Repository<Posts>,
   ) {}
 
   async getAllPosts(
@@ -51,12 +50,13 @@ export class PostsSqlQueryRepository {
       `,
         [pageSize, offset, userId],
       );
-
-      const totalCount = await this.dataSource.query(`
-            SELECT COUNT("id")
-            FROM public."posts" 
-      `);
-      const pagesCount = Math.ceil(+totalCount[0].count / pageSize);
+      const result = await this.postRepository
+        .createQueryBuilder('post')
+        .leftJoinAndSelect('post.postLikes', 'like_post')
+        .getManyAndCount();
+      debugger;
+      const totalCount = result[1];
+      const pagesCount = Math.ceil(totalCount / pageSize);
       const likes = await this.dataSource.query(`
             SELECT l."updatedAt" as "addedAt", u."id" as "userId", l."login",l."postId"
             FROM public."like_post" l
@@ -68,12 +68,12 @@ export class PostsSqlQueryRepository {
         pagesCount,
         page: pageNumber,
         pageSize,
-        totalCount: +totalCount[0].count,
-        items: posts.map((i) => postMapper(i, likes)),
+        totalCount: totalCount,
+        items: result[0].map((i) => postSqlMapper(i, userId)),
       };
     } catch (e) {
       console.log(e);
-      throw new Error();
+      throw new Error(e);
     }
   }
   async getPostById(postId: string, userId?: string): Promise<PostType | null> {

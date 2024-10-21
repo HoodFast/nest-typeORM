@@ -36,11 +36,11 @@ describe('PostsController (e2e)', () => {
   });
   afterAll(async () => {
     const testManager = new TestManager(app);
-    await testManager.deleteAll();
+    // await testManager.deleteAll();
   });
   afterEach(async () => {
     const testManager = new TestManager(app);
-    await testManager.deleteAll();
+    // await testManager.deleteAll();
   });
   expect.setState({
     createPostData: postsDto.createPostData,

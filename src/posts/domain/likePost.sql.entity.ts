@@ -17,10 +17,14 @@ export class LikePost extends BaseEntity {
     onDelete: 'CASCADE',
   })
   user: string;
+  @Column()
+  userId: string;
   @ManyToOne(() => Posts, (Posts) => Posts.postLikes, {
     onDelete: 'CASCADE',
   })
   post: string;
+  @Column()
+  postId: string;
   @Column({ type: 'enum', enum: likesStatuses, default: likesStatuses.none })
   likesStatus: likesStatuses;
 }
