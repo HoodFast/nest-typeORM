@@ -69,6 +69,7 @@ export class PostsSqlQueryRepository {
     data: SortData,
   ): Promise<Pagination<PostType> | null> {
     const { sortBy, sortDirection, pageSize, pageNumber } = data;
+    const mySortDirection = sortDirection.toUpperCase() as typeof sortDirection;
     const offset = (pageNumber - 1) * pageSize;
     const blog = await this.blogsQueryRepository.getBlogById(blogId);
     if (!blog) return null;
@@ -76,7 +77,7 @@ export class PostsSqlQueryRepository {
     const result = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.postLikes', 'like_post')
-      .orderBy(`post.${sortBy}`, sortDirection)
+      .orderBy(`post.${sortBy}`, mySortDirection)
       .skip(offset)
       .take(pageSize)
       .where(`post.blogId = :blogId`, { blogId })
