@@ -75,7 +75,7 @@ export class PostsSaController {
     };
     // @ts-ignore
     const userId = req.userId ? req.userId : null;
-    const posts = await this.postService.getAllPosts(userId, sortData);
+    const posts = await this.postService.getAllPosts(sortData, userId);
 
     return posts;
   }
