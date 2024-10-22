@@ -84,58 +84,53 @@ export const postMapper = (
   }
 };
 
-export const postSqlMapper = (post: Posts, userId: string): PostType => {
-  try {
-    const x = post.postLikes;
-    let likesCount;
-    let dislikesCount;
-    let newestLikes: NewestLikesOutput[] = [];
-    if (post.postLikes) {
-      newestLikes = post.postLikes
-        .filter(
-          (i) => i.postId === post.id && i.likesStatus === likesStatuses.like,
-        )
-        .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
-        .slice(0, 3)
-        .map(newestSqlLikesMapper);
-      likesCount = post.postLikes.filter(
-        (i) => i.likesStatus === likesStatuses.like,
-      ).length;
-      dislikesCount = post.postLikes.filter(
-        (i) => i.likesStatus === likesStatuses.dislike,
-      ).length;
-    }
-    debugger;
-    let myStatus = likesStatuses.none;
-    if (userId) {
-      const myLikesStatus = post.postLikes.find((i) => i.userId === userId);
-      if (myLikesStatus) myStatus = myLikesStatus.likesStatus;
-    }
-    return {
-      id: post.id,
-      title: post.title,
-      shortDescription: post.shortDescription,
-      content: post.content,
-      blogId: post.blogId,
-      blogName: post.blogName,
-      createdAt: post.createdAt,
-      extendedLikesInfo: {
-        likesCount: likesCount,
-        dislikesCount: dislikesCount,
-        myStatus: myStatus,
-        newestLikes,
-      },
-    };
-  } catch (e) {
-    console.log(e);
-    throw new Error('post mapper');
+export const postSqlMapper = (post: Posts, userId?: string): PostType => {
+  const x = post.postLikes;
+  let likesCount;
+  let dislikesCount;
+  let newestLikes: NewestLikesOutput[] = [];
+  if (post.postLikes) {
+    newestLikes = post.postLikes
+      .filter(
+        (i) => i.postId === post.id && i.likesStatus === likesStatuses.like,
+      )
+      .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+      .slice(0, 3)
+      .map(newestSqlLikesMapper);
+    likesCount = post.postLikes.filter(
+      (i) => i.likesStatus === likesStatuses.like,
+    ).length;
+    dislikesCount = post.postLikes.filter(
+      (i) => i.likesStatus === likesStatuses.dislike,
+    ).length;
   }
+
+  let myStatus = likesStatuses.none;
+  if (userId) {
+    const myLikesStatus = post.postLikes.find((i) => i.userId === userId);
+    if (myLikesStatus) myStatus = myLikesStatus.likesStatus;
+  }
+  return {
+    id: post.id,
+    title: post.title,
+    shortDescription: post.shortDescription,
+    content: post.content,
+    blogId: post.blogId,
+    blogName: post.blogName,
+    createdAt: post.createdAt,
+    extendedLikesInfo: {
+      likesCount: likesCount,
+      dislikesCount: dislikesCount,
+      myStatus: myStatus,
+      newestLikes,
+    },
+  };
 };
 
 export const newestSqlLikesMapper = (like: LikePost): NewestLikesOutput => {
   return {
     addedAt: like.updatedAt,
-    userId: like.user,
+    userId: like.userId,
     login: like.login,
   };
 };
