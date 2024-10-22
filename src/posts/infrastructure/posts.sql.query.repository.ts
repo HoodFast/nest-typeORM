@@ -18,7 +18,7 @@ export class PostsSqlQueryRepository {
 
   async getAllPosts(
     data: SortData,
-    userId: string,
+    userId?: string,
   ): Promise<Pagination<PostType>> {
     try {
       const { sortBy, sortDirection, pageSize, pageNumber } = data;
@@ -89,7 +89,7 @@ export class PostsSqlQueryRepository {
       page: pageNumber,
       pageSize,
       totalCount: result[1],
-      items: result.map((i: any) => postSqlMapper(i, userId)),
+      items: result[0].map((i: Posts) => postSqlMapper(i, userId)),
     };
   }
 }

@@ -17,7 +17,7 @@ export class PostService {
     protected blogsQueryRepository: BlogsSqlQueryRepository,
   ) {}
 
-  async getAllPosts(userId: string, data: SortData) {
+  async getAllPosts(data: SortData, userId?: string) {
     return await this.postsQueryRepository.getAllPosts(data, userId);
   }
 
