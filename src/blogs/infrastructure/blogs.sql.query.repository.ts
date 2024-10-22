@@ -4,6 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 import { BlogSortData } from '../../base/sortData/sortData.model';
 import { blogMapper } from '../domain/blog.mapper';
 import { Blogs } from '../domain/blog.sql.entity';
+import { sortDirection } from '../api/blogs.controller';
 
 @Injectable()
 export class BlogsSqlQueryRepository {
@@ -16,13 +17,15 @@ export class BlogsSqlQueryRepository {
     try {
       const { sortBy, sortDirection, searchNameTerm, pageSize, pageNumber } =
         sortData;
+      const mySortDirection =
+        sortDirection.toUpperCase() as typeof sortDirection;
       const offset = (pageNumber - 1) * pageSize;
       const result = await this.blogRepository
         .createQueryBuilder('blog')
         .where('blog.name ILIKE :searchLoginTerm ', {
           searchLoginTerm: `%${searchNameTerm}%`,
         })
-        .orderBy(`blog.${sortBy}`, sortDirection)
+        .orderBy(`blog.${sortBy}`, mySortDirection)
         .skip(offset)
         .take(pageSize)
         .getManyAndCount();

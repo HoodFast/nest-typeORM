@@ -68,6 +68,10 @@ export class BlogsController {
 
   @Get()
   async getAllBlogs(@Query() query: queryBlogsInputType) {
+    let mySortDirection = sortDirection.desc;
+    if (query.sortDirection) {
+      mySortDirection = query.sortDirection.toUpperCase() as sortDirection;
+    }
     const sortData = {
       searchNameTerm: query.searchNameTerm ?? '',
       sortBy: query.sortBy ?? 'createdAt',

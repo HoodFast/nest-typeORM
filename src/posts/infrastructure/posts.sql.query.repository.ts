@@ -22,12 +22,14 @@ export class PostsSqlQueryRepository {
   ): Promise<Pagination<PostType>> {
     try {
       const { sortBy, sortDirection, pageSize, pageNumber } = data;
+      const mySortDirection =
+        sortDirection.toUpperCase() as typeof sortDirection;
       const offset = (pageNumber - 1) * pageSize;
 
       const result = await this.postRepository
         .createQueryBuilder('post')
         .leftJoinAndSelect('post.postLikes', 'like_post')
-        .orderBy(`post.${sortBy}`, sortDirection)
+        .orderBy(`post.${sortBy}`, mySortDirection)
         .skip(offset)
         .take(pageSize)
         .getManyAndCount();

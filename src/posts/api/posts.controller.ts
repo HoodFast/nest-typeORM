@@ -75,7 +75,7 @@ export class PostsController {
       pageSize: query.pageSize ? +query.pageSize : 10,
     };
     // @ts-ignore
-    const userId = req.userId ? req.userId : null;
+
     const posts = await this.postService.getAllPosts(userId, sortData);
 
     return posts;
