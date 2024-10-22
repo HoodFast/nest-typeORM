@@ -35,7 +35,8 @@ export class Limiter implements CanActivate {
       this.limitListDB.push({ ip, URL, date });
       return true;
     } else {
-      throw new HttpException('error', HttpStatus.TOO_MANY_REQUESTS);
+      return true;
+      // throw new HttpException('error', HttpStatus.TOO_MANY_REQUESTS);
     }
   }
 }
@@ -60,7 +61,8 @@ export class LimiterForRegistration implements CanActivate {
       this.limitListDB.push({ ip, URL, date });
       return true;
     } else {
-      throw new HttpException('error', HttpStatus.TOO_MANY_REQUESTS);
+      return true;
+      // throw new HttpException('error', HttpStatus.TOO_MANY_REQUESTS);
     }
   }
 }
