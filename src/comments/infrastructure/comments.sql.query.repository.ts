@@ -1,15 +1,18 @@
 import { SortData } from '../../base/sortData/sortData.model';
 import { Pagination } from '../../base/paginationInputDto/paginationOutput';
 import { CommentsOutputType } from '../api/model/output/comments.output';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { commentSqlMapper } from './mappers/comments.sql.mapper';
 import { PostsSqlQueryRepository } from '../../posts/infrastructure/posts.sql.query.repository';
-import { InjectDataSource } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { Comments } from '../domain/comment.sql.entity';
 
 export class CommentsSqlQueryRepository {
   constructor(
     protected postQueryRepository: PostsSqlQueryRepository,
     @InjectDataSource() protected dataSource: DataSource,
+    @InjectRepository(Comments)
+    protected commentsRepository: Repository<Comments>,
   ) {}
   async getCommentById(
     commentId: string,
@@ -42,8 +45,13 @@ export class CommentsSqlQueryRepository {
     `,
         [commentId, userId],
       );
-
-      if (!comment[0]) return null;
+      const comments = await this.commentsRepository
+        .createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.commentLikes', 'likes')
+        .where(`comment.id = :commentId`, { commentId })
+        .getOne();
+      if (!comment) return null;
+      debugger;
       return commentSqlMapper(comment[0]);
     } catch (e) {
       console.log(e);
