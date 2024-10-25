@@ -11,6 +11,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
 import { PostService } from '../application/posts.service';
 
@@ -38,6 +39,7 @@ import { CommentsInput } from '../../comments/api/model/input/comments.input';
 import { CommentsOutputType } from '../../comments/api/model/output/comments.output';
 import { PostsSqlQueryRepository } from '../infrastructure/posts.sql.query.repository';
 import { CommentsSqlQueryRepository } from '../../comments/infrastructure/comments.sql.query.repository';
+import { SortDirectionPipe } from '../../base/pipes/sortDirectionPipe';
 
 @Controller('posts')
 export class PostsController {
@@ -91,6 +93,7 @@ export class PostsController {
     return post;
   }
   @UseGuards(AccessTokenGetId)
+  @UsePipes(SortDirectionPipe)
   @Get(':id/comments')
   async getCommentsForPost(
     @Param('id') postId: string,

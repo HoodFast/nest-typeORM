@@ -7,10 +7,12 @@ import {
 import { Model } from 'mongoose';
 import { CommentsOutputType } from '../api/model/output/comments.output';
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { CommentsSqlQueryRepository } from './comments.sql.query.repository';
 import { UsersSqlQueryRepository } from '../../users/infrastructure/users.sql.query.repository';
+import { Comments } from '../domain/comment.sql.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class CommentsSqlRepository {
@@ -18,30 +20,23 @@ export class CommentsSqlRepository {
     private commentsQueryRepository: CommentsSqlQueryRepository,
     private usersQueryRepository: UsersSqlQueryRepository,
     private dataSource: DataSource,
+    @InjectRepository(Comments)
+    protected commentsRepository: Repository<Comments>,
   ) {}
   async createComment(
     createData: CommentDbType,
   ): Promise<CommentsOutputType | null> {
     try {
-      const commentsId = randomUUID();
-      const res = await this.dataSource.query(
-        `
-    INSERT INTO public."comments"(
-    "id","content","createdAt","userId","postId","userLogin"
-    )
-    VALUES($1,$2,$3,$4,$5,$6)
-    `,
-        [
-          commentsId,
-          createData.content,
-          createData.createdAt,
-          createData.commentatorInfo.userId,
-          createData.postId,
-          createData.commentatorInfo.userLogin,
-        ],
-      );
+      const newComment = new Comments();
+      newComment.content = createData.content;
+      newComment.createdAt = new Date(createData.createdAt);
+      newComment.userId = createData.commentatorInfo.userId;
+      newComment.postId = createData.postId;
+      newComment.userLogin = createData.commentatorInfo.userLogin;
+
+      const save = await this.commentsRepository.save(newComment);
       const comment = await this.commentsQueryRepository.getCommentById(
-        commentsId,
+        save.id,
         createData.commentatorInfo.userId,
       );
       if (!comment) {
@@ -55,26 +50,17 @@ export class CommentsSqlRepository {
   }
 
   async updateComment(id: string, content: string): Promise<boolean> {
-    const res = await this.dataSource.query(
-      `
-    UPDATE public."comments" c
-    SET "content" = $1
-    WHERE c."id" = $2
-    `,
-      [content, id],
-    );
-    return !!res[1];
+    const comment = await this.commentsRepository.findOne({ where: { id } });
+    if (!comment) return false;
+    comment.content = content;
+    const save = await this.commentsRepository.save(comment);
+
+    return !!save;
   }
 
   async deleteById(id: string): Promise<boolean> {
-    const res = await this.dataSource.query(
-      `
-    DELETE FROM public."comments" c
-    WHERE c."id" = $1
-    `,
-      [id],
-    );
-    return !!res[0];
+    const deleted = await this.commentsRepository.delete({ id });
+    return !!deleted.affected;
   }
   async addLikeToComment(
     userId: string,

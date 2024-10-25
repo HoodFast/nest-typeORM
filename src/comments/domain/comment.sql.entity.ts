@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Users } from '../../users/domain/user.sql.entity';
 import { Posts } from '../../posts/domain/post.sql.entity';
@@ -12,7 +13,7 @@ import { likesStatuses } from '../../posts/domain/likes.statuses';
 
 @Entity()
 export class Comments extends BaseEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column()
   content: string;
@@ -31,11 +32,13 @@ export class Comments extends BaseEntity {
   userId: string;
   @ManyToOne(() => Posts, (Posts) => Posts.comments, { onDelete: 'CASCADE' })
   post: string;
+  @Column()
+  postId: string;
 }
 
 @Entity()
 export class CommentsLikes extends BaseEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column({ type: 'enum', enum: likesStatuses, default: likesStatuses.none })
   likesStatus: likesStatuses;
@@ -51,4 +54,6 @@ export class CommentsLikes extends BaseEntity {
     onDelete: 'CASCADE',
   })
   user: string;
+  @Column()
+  userId: string;
 }
