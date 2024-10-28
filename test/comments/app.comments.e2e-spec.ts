@@ -59,7 +59,7 @@ describe('CommentsController (e2e)', () => {
   beforeEach(async () => {});
 
   afterAll(async () => {
-    // await testManager.deleteAll();
+    await testManager.deleteAll();
   });
   expect.setState({
     createPostData: postsDto.createPostData,

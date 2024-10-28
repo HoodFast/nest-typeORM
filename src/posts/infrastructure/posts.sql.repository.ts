@@ -7,6 +7,7 @@ import { DataSource, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Posts } from '../domain/post.sql.entity';
+import { LikePost } from '../domain/likePost.sql.entity';
 
 @Injectable()
 export class PostsSqlRepository {
@@ -15,6 +16,8 @@ export class PostsSqlRepository {
     protected postsQueryRepository: PostsSqlQueryRepository,
     @InjectDataSource() protected dataSource: DataSource,
     @InjectRepository(Posts) protected postRepository: Repository<Posts>,
+    @InjectRepository(LikePost)
+    protected postLikeRepository: Repository<LikePost>,
   ) {}
 
   async createPost(data: PostCreateData, userId?: string) {
@@ -73,17 +76,7 @@ export class PostsSqlRepository {
       throw new Error();
     }
   }
-  async getLikeToPostWithUserId(postId: string, userId: string) {
-    const res = await this.dataSource.query(
-      `
-    SELECT *
-    FROM public."like_post" p
-    WHERE p."postId" = $1 AND p."userId" = $2
-    `,
-      [postId, userId],
-    );
-    return res[0];
-  }
+
   async updateLikeToPost(
     userId: string,
     likeStatus: likesStatuses,
@@ -91,29 +84,28 @@ export class PostsSqlRepository {
     postId: string,
   ): Promise<boolean | null> {
     try {
-      const myLike = await this.getLikeToPostWithUserId(postId, userId);
-      const likeId = randomUUID();
+      const myLike = await this.postLikeRepository.findOne({
+        where: {
+          postId,
+          userId,
+        },
+      });
       const dateNow = new Date();
       if (!myLike) {
-        const createdLike = await this.dataSource.query(
-          `
-        INSERT INTO public."like_post"("id","createdAt","updatedAt","login","likesStatus", "userId","postId")
-        VALUES($1,$2,$3,$4,$5,$6,$7)
-        `,
-          [likeId, dateNow, dateNow, login, likeStatus, userId, postId],
-        );
+        const newLikeToPost = new LikePost();
+        newLikeToPost.updatedAt = dateNow;
+        newLikeToPost.createdAt = dateNow;
+        newLikeToPost.login = login;
+        newLikeToPost.likesStatus = likeStatus;
+        newLikeToPost.userId = userId;
+        newLikeToPost.postId = postId;
+        await this.postLikeRepository.save(newLikeToPost);
         return true;
       }
 
-      const updatedLikeStatus = await this.dataSource.query(
-        `
-      UPDATE public."like_post"
-      SET "likesStatus" = $1, "updatedAt" = $3 
-      WHERE "id" = $2
-      `,
-        [likeStatus, myLike.id, dateNow],
-      );
-
+      myLike.likesStatus = likeStatus;
+      myLike.updatedAt = dateNow;
+      await this.postLikeRepository.save(myLike);
       return true;
     } catch (e) {
       console.log(e);

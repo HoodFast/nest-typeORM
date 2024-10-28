@@ -1,11 +1,18 @@
-import { BaseEntity, Column, Entity, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Users } from '../../users/domain/user.sql.entity';
 import { Posts } from './post.sql.entity';
 import { likesStatuses } from './likes.statuses';
 
 @Entity()
 export class LikePost extends BaseEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
   @Column()
   createdAt: Date;

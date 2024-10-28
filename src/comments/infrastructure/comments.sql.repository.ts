@@ -11,8 +11,9 @@ import { DataSource, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { CommentsSqlQueryRepository } from './comments.sql.query.repository';
 import { UsersSqlQueryRepository } from '../../users/infrastructure/users.sql.query.repository';
-import { Comments } from '../domain/comment.sql.entity';
+import { Comments, CommentsLikes } from '../domain/comment.sql.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { likesStatuses } from '../../posts/domain/likes.statuses';
 
 @Injectable()
 export class CommentsSqlRepository {
@@ -22,6 +23,8 @@ export class CommentsSqlRepository {
     private dataSource: DataSource,
     @InjectRepository(Comments)
     protected commentsRepository: Repository<Comments>,
+    @InjectRepository(CommentsLikes)
+    protected commentsLikeRepository: Repository<CommentsLikes>,
   ) {}
   async createComment(
     createData: CommentDbType,
@@ -65,39 +68,34 @@ export class CommentsSqlRepository {
   async addLikeToComment(
     userId: string,
     commentId: string,
-    likeStatus: string,
-  ) {
+    likeStatus: likesStatuses,
+  ): Promise<boolean> {
     try {
       const user = await this.usersQueryRepository.getUserById(userId);
-      if (!user) return null;
-      const myLikeId = await this.dataSource.query(
-        `
-    SELECT "id"
-    FROM public."comments_likes" p
-    WHERE p."userId" = $1 AND p."commentId" = $2
-    `,
-        [userId, commentId],
-      );
-      const likeId = randomUUID();
+      if (!user) return false;
+
+      const myLike = await this.commentsLikeRepository.findOne({
+        where: {
+          commentId,
+          userId,
+        },
+      });
+
       const dateNow = new Date();
-      if (!myLikeId[0]) {
-        const createdLike = await this.dataSource.query(
-          `
-        INSERT INTO public."comments_likes"("id","likesStatus","createdAt","updatedAt","commentId","userId")
-        VALUES($1,$2,$3,$4,$5,$6)
-        `,
-          [likeId, likeStatus, dateNow, dateNow, commentId, userId],
-        );
+      if (!myLike) {
+        const newLikeToComment = new CommentsLikes();
+        newLikeToComment.likesStatus = likeStatus;
+        newLikeToComment.createdAt = dateNow;
+        newLikeToComment.updatedAt = dateNow;
+        newLikeToComment.commentId = commentId;
+        newLikeToComment.userId = userId;
+        await this.commentsLikeRepository.save(newLikeToComment);
         return true;
       }
-      const updatedLike = await this.dataSource.query(
-        `
-      UPDATE public."comments_likes"
-      SET "likesStatus" = $1, "updatedAt" = $2 
-      WHERE "id" = $3
-`,
-        [likeStatus, dateNow, myLikeId[0].id],
-      );
+
+      myLike.likesStatus = likeStatus;
+      myLike.updatedAt = dateNow;
+      await this.commentsLikeRepository.save(myLike);
       return true;
     } catch (e) {
       console.log(e);

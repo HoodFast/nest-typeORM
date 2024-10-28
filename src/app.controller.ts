@@ -39,7 +39,7 @@ export class AppController {
 
   @Get()
   async hello() {
-    return 'Start App';
+    return 'Hello World!';
   }
   @Get('getusers')
   async getUsers() {

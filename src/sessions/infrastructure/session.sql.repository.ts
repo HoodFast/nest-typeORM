@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Not, Repository } from 'typeorm';
 import { SessionEntity } from '../domain/session.entity';
 import { Sessions } from '../domain/session.sql.entity';
 @Injectable()
@@ -83,13 +83,17 @@ export class SessionSqlRepository {
   }
 
   async deleteAllSession(userId: string, deviceId: string) {
-    const deleteAllSessions = await this.dataSource.query(
-      `
-        DELETE FROM public.sessions
-            WHERE "userId" = $1 AND not("deviceId"=$2);
-    `,
-      [userId, deviceId],
-    );
-    return !!deleteAllSessions[1];
+    // const deleteAllSessions = await this.dataSource.query(
+    //   `
+    //     DELETE FROM public.sessions
+    //         WHERE "userId" = $1 AND not("deviceId"=$2);
+    // `,
+    //   [userId, deviceId],
+    // );
+    const deleted = await this.sessionRepository.delete({
+      userId: userId,
+      deviceId: Not(deviceId),
+    });
+    return !!deleted.affected;
   }
 }

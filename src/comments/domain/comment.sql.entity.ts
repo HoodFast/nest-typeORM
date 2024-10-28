@@ -50,6 +50,8 @@ export class CommentsLikes extends BaseEntity {
     onDelete: 'CASCADE',
   })
   comment: string;
+  @Column()
+  commentId: string;
   @ManyToOne(() => Users, (Users) => Users.commentLikes, {
     onDelete: 'CASCADE',
   })
