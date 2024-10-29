@@ -267,8 +267,8 @@ export class AppController {
       pageSize: 10,
     };
     const res = await this.commentsSqlQueryRepository.getAllByPostId(
-      'ba246926-563d-4a6f-9032-2215481e397f',
-      'b03b5e57-7d62-4922-97f6-0a48802461a6',
+      '8b8a2633-2ddc-439c-b474-9d1d4717282f',
+      'e277e02d-223c-488b-9d32-c0b40b98a253',
       data,
     );
     return res;

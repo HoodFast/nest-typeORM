@@ -46,16 +46,20 @@ export class CommentsLikes extends BaseEntity {
   createdAt: Date;
   @Column()
   updatedAt: Date;
+
   @ManyToOne(() => Comments, (Comments) => Comments.commentLikes, {
     onDelete: 'CASCADE',
   })
   comment: string;
+
   @Column()
   commentId: string;
+
   @ManyToOne(() => Users, (Users) => Users.commentLikes, {
     onDelete: 'CASCADE',
   })
   user: string;
+
   @Column()
   userId: string;
 }

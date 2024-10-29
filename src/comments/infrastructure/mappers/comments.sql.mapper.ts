@@ -38,13 +38,15 @@ export const commentSqlOrmMapper = (
 ): CommentsOutputType => {
   const likesCount = comment.commentLikes.reduce((acc, j) => {
     if (j.likesStatus === likesStatuses.like) {
-      return acc + 1;
+      acc++;
     }
+    return acc;
   }, 0);
   const dislikesCount = comment.commentLikes.reduce((acc, j) => {
     if (j.likesStatus === likesStatuses.dislike) {
-      return acc + 1;
+      acc++;
     }
+    return acc;
   }, 0);
   let myStatus = likesStatuses.none;
   if (comment.commentLikes) {
