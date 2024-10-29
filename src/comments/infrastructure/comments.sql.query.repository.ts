@@ -46,16 +46,19 @@ export class CommentsSqlQueryRepository {
       if (!post) return null;
       const { sortBy, sortDirection, pageSize, pageNumber } = sortData;
       const offset = (pageNumber - 1) * pageSize;
-      const result = await this.commentsRepository
-        .createQueryBuilder('comment')
-        .leftJoinAndSelect('comment.commentLikes', 'likes')
-        .where(`comment.postId = :postId`, { postId })
-        .limit(pageSize)
-        .offset(offset)
-        .orderBy(`comment.${sortBy}`, sortDirection)
-        .getManyAndCount();
 
-      const totalCount = result[1];
+      const [comments, totalCount] = await this.commentsRepository.findAndCount(
+        {
+          relations: ['commentLikes'],
+          where: { postId },
+          take: pageSize,
+          skip: offset,
+          order: {
+            [sortBy]: sortDirection,
+          },
+        },
+      );
+
       const pagesCount = Math.ceil(totalCount / pageSize);
 
       return {
@@ -63,7 +66,7 @@ export class CommentsSqlQueryRepository {
         page: pageNumber,
         pageSize,
         totalCount: totalCount,
-        items: result[0].map((i: any) => commentSqlOrmMapper(i, userId)),
+        items: comments.map((i: any) => commentSqlOrmMapper(i, userId)),
       };
     } catch (e) {
       console.log(e);
